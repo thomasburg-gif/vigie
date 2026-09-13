@@ -1,0 +1,1385 @@
+<title>Vigie</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --paper: #f1efe7;
+    --plane: #eae7dd;
+    --surface: #fbfaf6;
+    --ink: #191a1d;
+    --ink-soft: #57564f;
+    --muted: #8a887f;
+    --line: rgba(25,26,29,0.12);
+    --line-strong: rgba(25,26,29,0.22);
+    --accent: #a85a24;
+    --accent-ink: #6e3c17;
+    --accent-soft: #f0dcc0;
+    --accent-soft-line: rgba(168,90,36,0.35);
+
+    /* chart tokens — dataviz reference palette, unchanged */
+    --seq-100: #cde2fb; --seq-250: #86b6ef; --seq-400: #3987e5; --seq-450: #2a78d6; --seq-550: #1c5cab; --seq-650: #104281;
+    --status-good: #0ca30c; --status-warning: #fab219; --status-serious: #ec835a; --status-critical: #d03b3b;
+
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --paper: #15171b; --plane: #1a1c21; --surface: #1d2025;
+      --ink: #f1efe6; --ink-soft: #c7c4b8; --muted: #85837a;
+      --line: rgba(241,239,230,0.12); --line-strong: rgba(241,239,230,0.22);
+      --accent: #d98a4a; --accent-ink: #f3c99a; --accent-soft: #3a2c1c; --accent-soft-line: rgba(217,138,74,0.4);
+      --seq-100: #184f95; --seq-250: #1c5cab; --seq-400: #3987e5; --seq-450: #5598e7; --seq-550: #86b6ef; --seq-650: #cde2fb;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --paper: #15171b; --plane: #1a1c21; --surface: #1d2025;
+    --ink: #f1efe6; --ink-soft: #c7c4b8; --muted: #85837a;
+    --line: rgba(241,239,230,0.12); --line-strong: rgba(241,239,230,0.22);
+    --accent: #d98a4a; --accent-ink: #f3c99a; --accent-soft: #3a2c1c; --accent-soft-line: rgba(217,138,74,0.4);
+    --seq-100: #184f95; --seq-250: #1c5cab; --seq-400: #3987e5; --seq-450: #5598e7; --seq-550: #86b6ef; --seq-650: #cde2fb;
+  }
+
+  *{ box-sizing: border-box; }
+  body{ background: var(--paper); color: var(--ink); font-family: var(--sans); }
+  h1,h2,h3{ font-family: var(--serif); font-weight: 600; text-wrap: balance; margin: 0; }
+  p{ margin: 0; }
+  button{ font-family: inherit; }
+  ::selection{ background: var(--accent-soft); }
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .app{ display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width: 236px; flex: none; background: var(--plane);
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 28px;
+    padding: 26px 20px; position: sticky; top: 0; height: 100vh;
+  }
+  .brand{ display:flex; align-items:center; gap: 10px; }
+  .brand svg{ width: 26px; height: 26px; flex: none; }
+  .brand-name{ font-family: var(--serif); font-size: 1.35rem; font-weight: 600; letter-spacing: 0.01em; }
+  .brand-tag{ font-size: 0.72rem; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+
+  nav{ display: flex; flex-direction: column; gap: 2px; }
+  .nav-btn{
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 7px; border: none; background: none;
+    color: var(--ink-soft); font-size: 0.87rem; text-align: left; cursor: pointer;
+  }
+  .nav-btn svg{ width: 16px; height: 16px; flex: none; opacity: 0.75; }
+  .nav-btn:hover{ background: var(--line); color: var(--ink); }
+  .nav-btn[aria-current="page"]{ background: var(--accent-soft); color: var(--accent-ink); font-weight: 500; }
+  .nav-btn[aria-current="page"] svg{ opacity: 1; }
+
+  .sidebar-profile{
+    margin-top: auto; border-top: 1px solid var(--line); padding-top: 16px;
+    font-size: 0.78rem; color: var(--ink-soft); display: flex; flex-direction: column; gap: 6px;
+  }
+  .sidebar-profile b{ color: var(--ink); font-weight: 500; }
+  .sidebar-profile .demo-pill{
+    align-self: flex-start; font-size: 0.65rem; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--accent-ink); background: var(--accent-soft); border: 1px solid var(--accent-soft-line);
+    padding: 2px 7px; border-radius: 99px; margin-bottom: 4px;
+  }
+
+  /* ---------- Main ---------- */
+  main{ flex: 1; min-width: 0; padding: 34px 42px 60px; max-width: 1080px; }
+  .view{ display: none; flex-direction: column; gap: 28px; }
+  .view.active{ display: flex; }
+
+  .view-head{ display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .view-head h1{ font-size: 1.7rem; }
+  .view-head .sub{ color: var(--ink-soft); font-size: 0.92rem; margin-top: 5px; max-width: 62ch; }
+  .demo-note{
+    font-size: 0.76rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; white-space: nowrap;
+  }
+  .section-label{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color: var(--muted); margin-bottom: -6px; }
+
+  /* ---------- Dashboard sub-navigation ---------- */
+  .subnav{ display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:14px; }
+  .subnav-btn{
+    background:none; border:1px solid var(--line-strong); border-radius:99px; padding:7px 15px;
+    font-size:0.83rem; color: var(--ink-soft); cursor:pointer;
+  }
+  .subnav-btn:hover{ border-color: var(--accent-soft-line); color: var(--ink); }
+  .subnav-btn[aria-current="page"]{ background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent-soft-line); font-weight:500; }
+  .subview{ display:none; flex-direction:column; gap:28px; }
+  .subview.active{ display:flex; }
+
+  /* ---------- Cards / grid ---------- */
+  .grid{ display: grid; gap: 14px; }
+  .grid.stats{ grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .grid.two{ grid-template-columns: 1.3fr 1fr; align-items: start; }
+
+  .card{
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px;
+  }
+  .card h3{ font-size: 1rem; }
+
+  .stat-tile{ display: flex; flex-direction: column; gap: 6px; }
+  .stat-tile .label{ font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-tile .value{ font-family: var(--mono); font-size: 1.65rem; font-variant-numeric: tabular-nums; }
+  .stat-tile .delta{ font-size: 0.78rem; display: flex; align-items: center; gap: 4px; color: var(--ink-soft); }
+  .stat-tile .delta.good{ color: var(--status-good); }
+
+  /* ---------- Profile form ---------- */
+  .field-row{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; }
+  label.field{ display: flex; flex-direction: column; gap: 5px; font-size: 0.78rem; color: var(--ink-soft); }
+  label.field span{ text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.68rem; color: var(--muted); }
+  input, select{
+    font-family: var(--sans); font-size: 0.88rem; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line-strong); border-radius: 7px; padding: 7px 9px;
+  }
+  input:focus, select:focus{ border-color: var(--accent); }
+  .btn{
+    background: var(--ink); color: var(--paper); border: none; border-radius: 7px;
+    padding: 8px 15px; font-size: 0.84rem; font-weight: 500; cursor: pointer;
+  }
+  .btn.ghost{ background: none; color: var(--ink); border: 1px solid var(--line-strong); }
+  .btn.accent{ background: var(--accent); color: #fff8f0; }
+  .btn.small{ padding: 6px 11px; font-size: 0.78rem; }
+  .btn:disabled{ opacity:0.6; cursor:default; }
+
+  /* ---------- CV uploader ---------- */
+  .dropzone{
+    border: 1.5px dashed var(--line-strong); border-radius: 12px; padding: 26px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; color: var(--ink-soft);
+  }
+  .dropzone.drag{ border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone svg{ width: 26px; height: 26px; opacity: 0.6; }
+  .dropzone .fname{ font-family: var(--mono); font-size: 0.82rem; color: var(--ink); }
+  #cv-file{ display:none; }
+
+  .score-row{ display: flex; flex-direction: column; gap: 10px; }
+  .score-item{ display: grid; grid-template-columns: 130px 1fr 42px; align-items: center; gap: 10px; font-size: 0.82rem; }
+  .score-item .bar-track{ height: 8px; border-radius: 5px; background: var(--line); overflow: hidden; }
+  .score-item .bar-fill{ height: 100%; border-radius: 5px; background: var(--seq-450); }
+  .score-item .num{ font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+  .suggestions{ display:flex; flex-direction:column; gap:9px; margin:0; padding:0; list-style:none; }
+  .suggestions li{ display:flex; gap:9px; font-size:0.86rem; color: var(--ink-soft); line-height:1.4; }
+  .suggestions li svg{ width:15px; height:15px; flex:none; margin-top:3px; color: var(--accent); }
+
+  .tags{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tag{ font-family: var(--mono); font-size: 0.72rem; background: var(--plane); border:1px solid var(--line); border-radius:99px; padding:3px 9px; color: var(--ink-soft); }
+  .company-meta{ font-size: 0.76rem; color: var(--muted); }
+
+  .filter-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+  .filter-row label.field{ min-width: 150px; }
+
+  table.data-table{ width:100%; border-collapse: collapse; font-size:0.8rem; }
+  table.data-table th, table.data-table td{ text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); font-variant-numeric: tabular-nums; }
+  table.data-table th{ color: var(--muted); font-weight:500; font-size:0.72rem; text-transform:uppercase; letter-spacing:.03em; }
+  .offers-table td.poste{ font-weight:500; }
+  .offers-table .src{ font-family: var(--mono); font-size:0.7rem; color: var(--muted); }
+  .filter-chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:0.78rem; color: var(--accent-ink);
+    background: var(--accent-soft); border:1px solid var(--accent-soft-line); border-radius:99px; padding:4px 10px;
+  }
+  .filter-chip button{ background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; line-height:1; padding:0; }
+
+  /* ---------- Contact block ---------- */
+  .contact-block{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background: var(--plane); border:1px solid var(--line); border-radius:9px; padding:9px 12px;
+  }
+  .contact-who{ display:flex; flex-direction:column; gap:1px; }
+  .contact-name{ font-size:0.84rem; font-weight:500; }
+  .contact-role{ font-size:0.72rem; color: var(--muted); }
+  .contact-actions{ display:flex; gap:6px; flex:none; }
+  .icon-btn{
+    display:flex; align-items:center; gap:5px; font-size:0.74rem; color: var(--ink-soft);
+    background: var(--surface); border:1px solid var(--line-strong); border-radius:6px; padding:5px 8px; cursor:pointer;
+    text-decoration:none;
+  }
+  .icon-btn:hover{ border-color: var(--accent); color: var(--accent-ink); }
+  .icon-btn svg{ width:13px; height:13px; flex:none; }
+
+  /* ---------- Tracker ---------- */
+  .add-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .add-row label.field{ min-width:130px; }
+  .status-select{
+    font-family: var(--sans); font-size:0.76rem; font-weight:500; border-radius:99px; padding:4px 22px 4px 10px;
+    border:1px solid transparent; cursor:pointer; appearance:none; -webkit-appearance:none;
+    background-repeat:no-repeat; background-position:right 8px center; background-size:9px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2357564f' fill='none' stroke-width='1.4'/></svg>");
+  }
+  .status-select.st-neutral{ background-color: var(--line); color: var(--ink-soft); }
+  .status-select.st-progress{ background-color: var(--accent-soft); color: var(--accent-ink); }
+  .status-select.st-warning{ background-color: rgba(250,178,25,0.18); color: #8a5a00; }
+  .status-select.st-good{ background-color: rgba(12,163,12,0.16); color: var(--status-good); }
+  .status-select.st-critical{ background-color: rgba(208,59,59,0.15); color: var(--status-critical); }
+  @media (prefers-color-scheme: dark){ .status-select.st-warning{ color: var(--status-warning); } }
+  :root[data-theme="dark"] .status-select.st-warning{ color: var(--status-warning); }
+  .row-del{ background:none; border:none; color: var(--muted); cursor:pointer; font-size:0.95rem; padding:2px 5px; }
+  .row-del:hover{ color: var(--status-critical); }
+
+  /* ---------- Coherence diagnostic ---------- */
+  .coherence-badge{ display:inline-flex; align-items:center; gap:8px; padding:9px 15px; border-radius:10px; font-size:0.94rem; font-weight:600; }
+  .coherence-badge svg{ width:16px; height:16px; flex:none; }
+  .coherence-badge.t-critical{ background: rgba(208,59,59,0.14); color: var(--status-critical); }
+  .coherence-badge.t-serious{ background: rgba(236,131,90,0.18); color: var(--status-serious); }
+  .coherence-badge.t-warning{ background: rgba(250,178,25,0.2); color: #8a5a00; }
+  .coherence-badge.t-good{ background: rgba(12,163,12,0.14); color: var(--status-good); }
+  .coherence-badge.t-good-strong{ background: rgba(12,163,12,0.22); color: var(--status-good); }
+  @media (prefers-color-scheme: dark){ .coherence-badge.t-warning{ color: var(--status-warning); } }
+  :root[data-theme="dark"] .coherence-badge.t-warning{ color: var(--status-warning); }
+  .coherence-breakdown .row{ display:flex; justify-content:space-between; gap:10px; }
+  .coherence-breakdown .row span:last-child{ font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* ---------- Market tags / chips ---------- */
+  .trend-tag{
+    display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; font-weight:600;
+    padding:3px 9px; border-radius:99px; vertical-align:middle;
+  }
+  .trend-tag.up{ background: rgba(12,163,12,0.14); color: var(--status-good); }
+  .trend-tag.flat{ background: rgba(250,178,25,0.2); color: #8a5a00; }
+  .trend-tag.down{ background: rgba(208,59,59,0.14); color: var(--status-critical); }
+  @media (prefers-color-scheme: dark){ .trend-tag.flat{ color: var(--status-warning); } }
+  :root[data-theme="dark"] .trend-tag.flat{ color: var(--status-warning); }
+
+  /* ---------- Heat tags (chaleur de recrutement) ---------- */
+  .trend-tag.heat-active{ background: rgba(12,163,12,0.16); color: var(--status-good); }
+  .trend-tag.heat-funding{ background: var(--accent-soft); color: var(--accent-ink); }
+  .trend-tag.heat-recent{ background: rgba(250,178,25,0.2); color: #8a5a00; }
+  .trend-tag.heat-quiet{ background: rgba(208,59,59,0.12); color: var(--status-critical); }
+  @media (prefers-color-scheme: dark){ .trend-tag.heat-recent{ color: var(--status-warning); } }
+  :root[data-theme="dark"] .trend-tag.heat-recent{ color: var(--status-warning); }
+
+  .market-chip{
+    flex:1; min-width:170px; cursor:pointer; border:1px solid var(--line); border-radius:10px;
+    padding:13px 16px; background: var(--surface);
+  }
+  .market-chip:hover{ border-color: var(--accent-soft-line); }
+  .market-chip.is-selected{ border-color: var(--accent); background: var(--accent-soft); }
+  .market-chip-head{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  .market-chip-name{ font-family: var(--serif); font-weight:600; font-size:1.02rem; }
+  .market-chip-meta{ font-size:0.78rem; color: var(--ink-soft); margin-top:7px; display:flex; align-items:center; gap:6px; }
+
+  .reco-score{
+    flex:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family: var(--mono); font-size:0.8rem; font-weight:600; color:#fff8f0;
+  }
+  .reco-body{ flex:1; min-width:0; }
+  .reco-name{ font-family: var(--serif); font-weight:600; font-size:0.98rem; }
+  .reco-why{ font-size:0.82rem; color: var(--ink-soft); margin-top:3px; line-height:1.4; }
+  .reco-actions{ flex:none; display:flex; flex-direction:column; gap:8px; }
+  .market-company{ display:flex; align-items:flex-start; gap:14px; border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .market-company .contact-block{ margin-top:10px; }
+
+  /* ---------- Cover letter modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(10,10,10,0.5); display:flex; align-items:center; justify-content:center;
+    padding:24px; z-index:50;
+  }
+  .modal{
+    background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px 24px;
+    width:100%; max-width:640px; max-height:85vh; overflow-y:auto; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  .modal-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:6px; }
+  .modal-head h3{ font-size:1.05rem; }
+  .modal-close{ background:none; border:none; color: var(--muted); font-size:1rem; cursor:pointer; padding:2px 6px; flex:none; }
+  .modal-close:hover{ color: var(--ink); }
+  .letter-textarea{
+    width:100%; min-height:340px; font-family: var(--sans); font-size:0.85rem; line-height:1.6; color: var(--ink);
+    background: var(--paper); border:1px solid var(--line-strong); border-radius:9px; padding:14px; resize:vertical;
+  }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
+  .hidden{ display:none !important; }
+
+  @media (max-width: 760px){
+    .app{ flex-direction: column; }
+    .sidebar{ position: static; height: auto; width: auto; flex-direction: row; flex-wrap: wrap; }
+    .sidebar-profile{ margin-top: 0; border-top: none; }
+    main{ padding: 24px 18px 50px; }
+    .grid.two{ grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition: none !important; animation: none !important; } }
+</style>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="var(--accent)" stroke-width="1.6"/><circle cx="16" cy="16" r="8.5" stroke="var(--accent)" stroke-width="1.6"/><line x1="16" y1="16" x2="24" y2="9" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="16" r="1.8" fill="var(--accent)"/></svg>
+      <div>
+        <div class="brand-name">Vigie</div>
+        <div class="brand-tag">Repérer les recrutements avant l'annonce</div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-btn" data-view="dashboard" aria-current="page"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="7" rx="1"/><rect x="11" y="3" width="6" height="4" rx="1"/><rect x="11" y="9" width="6" height="8" rx="1"/><rect x="3" y="12" width="6" height="5" rx="1"/></svg>Tableau de bord</button>
+      <button class="nav-btn" data-view="offers"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4.5" width="14" height="12" rx="1.2"/><path d="M3 8h14M7 4.5V3.2a1 1 0 011-1h4a1 1 0 011 1V4.5" stroke-linecap="round"/><path d="M6.5 11h3M6.5 13.5h7"/></svg>Offres du marché</button>
+      <button class="nav-btn" data-view="market"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4h15l-5.5 7v5l-4-2v-3z" stroke-linejoin="round" stroke-linecap="round"/></svg>Le marché</button>
+    </nav>
+    <div class="sidebar-profile">
+      <span class="demo-pill">Profil d'exemple</span>
+      <div><b id="sp-poste">Product Manager</b></div>
+      <div id="sp-secteur">Tech / SaaS · Lyon</div>
+      <div>Cible : <span id="sp-salaire" style="font-family:var(--mono)">55–65 k€</span></div>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- DASHBOARD : profil, CV, recherche, suivi des candidatures -->
+    <section class="view active" id="view-dashboard">
+      <div class="view-head">
+        <div>
+          <h1>Tableau de bord</h1>
+          <p class="sub">Votre profil, votre CV, les grandes lignes de votre recherche et le suivi de vos candidatures — tout au même endroit.</p>
+        </div>
+        <div class="demo-note">Aperçu avec données d'exemple</div>
+      </div>
+
+      <div class="grid stats">
+        <div class="card stat-tile">
+          <span class="label">Score de CV</span>
+          <span class="value">74<span style="font-size:1rem;color:var(--muted)">/100</span></span>
+          <span class="delta good">↑ +6 depuis la dernière version</span>
+        </div>
+        <div class="card stat-tile">
+          <span class="label">Cohérence du projet</span>
+          <span class="value" id="dash-coherence-value" style="font-size:1.25rem">—</span>
+          <span class="delta" id="dash-coherence-delta">Voir le détail ci-dessous</span>
+        </div>
+        <div class="card stat-tile">
+          <span class="label">Candidatures envoyées</span>
+          <span class="value" id="dash-cand-sent">0</span>
+          <span class="delta">Depuis « Le marché » et « Offres du marché »</span>
+        </div>
+        <div class="card stat-tile">
+          <span class="label">Entretiens en cours</span>
+          <span class="value" id="dash-cand-interviews">0</span>
+        </div>
+      </div>
+
+      <div class="subnav" role="tablist">
+        <button class="subnav-btn" data-sub="cv" aria-current="page">Mon CV</button>
+        <button class="subnav-btn" data-sub="recherche">Ma recherche</button>
+        <button class="subnav-btn" data-sub="suivi">Suivi des candidatures</button>
+      </div>
+
+      <div class="subview active" id="sub-cv">
+        <div class="grid two">
+          <div class="card" style="display:flex;flex-direction:column;gap:16px">
+            <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Déposer ou choisir un fichier CV">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke-linecap="round"/></svg>
+              <div>Glissez votre CV ici, ou <b style="color:var(--accent-ink)">parcourez vos fichiers</b></div>
+              <div class="fname" id="cv-fname">Exemple chargé : CV_Camille_Dubois.pdf</div>
+              <input type="file" id="cv-file" accept=".pdf,.doc,.docx">
+            </div>
+            <div>
+              <h3 style="margin-bottom:10px;font-size:0.95rem">Diagnostic par critère</h3>
+              <div class="score-row" id="cv-scores"></div>
+            </div>
+            <div>
+              <h3 style="margin-bottom:8px;font-size:0.95rem">Compétences détectées</h3>
+              <div class="tags" id="cv-tags"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom:10px">Suggestions concrètes</h3>
+            <ul class="suggestions" id="cv-suggestions"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="subview" id="sub-recherche">
+        <div class="grid two">
+          <div class="card">
+            <h3 style="margin-bottom:4px">Affiner ma recherche</h3>
+            <p class="sub" style="font-size:0.78rem;margin-bottom:14px">Extrait de votre CV — corrigez si besoin, puis précisez ce que vous visez.</p>
+            <div class="field-row" style="margin-bottom:10px">
+              <label class="field"><span>Poste actuel</span><input id="cv-poste-actuel" value="Product Manager"></label>
+              <label class="field"><span>Années d'expérience</span><input id="cv-annees" type="number" min="0" value="4"></label>
+              <label class="field"><span>Salaire actuel (k€)</span><input id="cv-sal-actuel" type="number" value="52"></label>
+            </div>
+            <div class="field-row" style="margin-bottom:14px">
+              <label class="field"><span>Poste visé</span><input id="cv-poste-vise" value="Product Manager"></label>
+              <label class="field"><span>Salaire visé min. (k€)</span><input id="cv-sal-min" type="number" value="55"></label>
+              <label class="field"><span>Salaire visé max. (k€)</span><input id="cv-sal-max" type="number" value="65"></label>
+            </div>
+            <button class="btn accent" id="cv-diagnose">Mettre à jour le diagnostic</button>
+            <p class="sub" style="font-size:0.74rem;margin-top:10px">À essayer : mettez « Directeur Produit » en poste visé avec 2 ans d'expérience pour voir un cas peu réaliste.</p>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom:12px">Diagnostic de cohérence</h3>
+            <div id="coherence-badge-wrap"></div>
+            <p id="coherence-advice" class="sub" style="font-size:0.85rem;margin-top:12px;line-height:1.5"></p>
+            <div id="coherence-breakdown" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:0.8rem;color:var(--ink-soft)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subview" id="sub-suivi">
+        <div class="card">
+          <div class="grid stats" style="margin-bottom:16px">
+            <div class="stat-tile"><span class="label">Total</span><span class="value" id="tr-total" style="font-size:1.2rem">0</span></div>
+            <div class="stat-tile"><span class="label">En cours</span><span class="value" id="tr-active" style="font-size:1.2rem">0</span></div>
+            <div class="stat-tile"><span class="label">Entretiens</span><span class="value" id="tr-interviews" style="font-size:1.2rem">0</span></div>
+            <div class="stat-tile"><span class="label">Taux de réponse</span><span class="value" id="tr-rate" style="font-size:1.2rem">0%</span></div>
+          </div>
+          <div class="add-row">
+            <label class="field"><span>Poste</span><input id="t-poste" placeholder="Intitulé"></label>
+            <label class="field"><span>Entreprise</span><input id="t-entreprise" placeholder="Entreprise"></label>
+            <label class="field"><span>Secteur</span>
+              <select id="t-secteur">
+                <option value="Tech / SaaS">Tech / SaaS</option>
+                <option value="Santé">Santé</option>
+                <option value="Industrie">Industrie</option>
+                <option value="Retail">Retail</option>
+                <option value="Finance">Finance</option>
+              </select>
+            </label>
+            <label class="field"><span>Date d'envoi</span><input id="t-date" type="date"></label>
+            <button class="btn accent" id="t-add">Ajouter une candidature</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table" id="tracker-table">
+              <thead><tr><th>Poste</th><th>Entreprise</th><th>Secteur</th><th>Envoyée le</th><th>Statut</th><th>Note</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OFFERS -->
+    <section class="view" id="view-offers">
+      <div class="view-head">
+        <div>
+          <h1>Offres du marché</h1>
+          <p class="sub">Les postes déjà publiés, agrégés depuis plusieurs sources, pour candidater directement sans attendre.</p>
+        </div>
+        <div class="demo-note">Données d'exemple</div>
+      </div>
+
+      <div class="card">
+        <div class="filter-row">
+          <label class="field"><span>Secteur</span>
+            <select id="o-secteur">
+              <option value="all">Tous secteurs</option>
+              <option value="Tech / SaaS">Tech / SaaS</option>
+              <option value="Santé">Santé</option>
+              <option value="Industrie">Industrie</option>
+              <option value="Retail">Retail</option>
+              <option value="Finance">Finance</option>
+            </select>
+          </label>
+          <label class="field"><span>Métier</span>
+            <input id="o-poste" placeholder="ex. Product Manager">
+          </label>
+          <label class="field"><span>Ville</span>
+            <input id="o-ville" placeholder="ex. Lyon">
+          </label>
+          <button class="btn accent" id="o-apply">Filtrer</button>
+          <button class="btn ghost" id="o-reset">Réinitialiser</button>
+        </div>
+        <div id="o-chip-wrap" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card" style="overflow-x:auto">
+        <table class="data-table offers-table" id="offers-table">
+          <thead><tr><th>Poste</th><th>Entreprise</th><th>Secteur</th><th>Ville</th><th>Salaire</th><th>Publié</th><th>Source</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MARKET : sélection d'un marché → liste d'entreprises intéressées par le profil -->
+    <section class="view" id="view-market">
+      <div class="view-head">
+        <div>
+          <h1>Le marché</h1>
+          <p class="sub">Sélectionnez un marché pour voir les entreprises les plus susceptibles d'être intéressées par votre profil, avec le contact pour les approcher directement.</p>
+        </div>
+        <div class="demo-note">Basé sur votre profil et des données d'exemple</div>
+      </div>
+
+      <div class="card">
+        <div id="market-chips" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:4px" id="market-title">Entreprises</h3>
+        <p class="sub" style="font-size:0.78rem;margin-bottom:14px" id="market-sub"></p>
+        <div id="market-companies" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-backdrop hidden" id="letter-modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="letter-modal-title">
+    <div class="modal-head">
+      <h3 id="letter-modal-title">Lettre de motivation — <span id="letter-company"></span></h3>
+      <button class="modal-close" id="letter-close" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <p class="sub" style="font-size:0.76rem;margin-bottom:10px">Générée à partir de votre profil et des signaux publics de l'entreprise — relisez et personnalisez avant l'envoi.</p>
+    <textarea id="letter-text" class="letter-textarea" rows="16"></textarea>
+    <div class="modal-actions">
+      <button class="btn ghost" id="letter-copy" type="button">Copier le texte</button>
+      <a class="btn accent" id="letter-mailto" href="#">Ouvrir dans mon email</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Mock data ---------------- */
+  var SECTOR_TRENDS = {
+    "Tech / SaaS":            [210,205,190,230,255,270,265,290,310,305,330,352],
+    "Santé":                  [160,165,170,168,175,180,190,185,195,200,205,214],
+    "Industrie":              [140,138,130,125,120,118,110,112,108,104,100,97],
+    "Retail":                 [180,190,200,175,165,178,182,170,160,168,172,166],
+    "Finance":                [120,118,122,125,124,128,126,130,129,133,131,136],
+    "Énergie":                [130,132,128,135,138,136,142,140,145,148,146,152],
+    "Éducation":              [95,97,96,98,100,99,101,103,102,104,103,106],
+    "Immobilier":             [150,145,140,142,135,130,128,125,120,118,115,110],
+    "Transport & Logistique": [175,178,172,180,176,182,179,185,181,187,184,190],
+    "Télécoms":               [110,112,115,113,118,120,119,124,122,127,125,130],
+    "Conseil":                [140,145,150,155,160,158,165,170,168,175,172,180]
+  };
+  var CANDIDATE_NAME = "Camille Dubois";
+
+  var COMPANIES = [
+    { name:"NovaMetrics", sector:"Tech / SaaS", city:"Lyon", heatKey:"active",
+      signals:["3 postes Product ouverts actuellement, dont un Product Manager Senior","Levée de série B de 14M€ en janvier 2026"],
+      salaryMin:58, salaryMax:70,
+      contactName:"Camille Roussel", contactRole:"Head of Product", contactEmail:"camille.roussel@novametrics.io",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Roadmap produit","Discovery utilisateur","A/B testing"] },
+    { name:"Solace Data", sector:"Tech / SaaS", city:"Bordeaux", heatKey:"funding",
+      signals:["Levée de série A de 6M€ il y a 3 mois","Équipe produit doublée en 2026"],
+      salaryMin:52, salaryMax:64,
+      contactName:"Marc Delattre", contactRole:"CTO", contactEmail:"marc.delattre@solacedata.io",
+      rolesRecherches:["Product Manager","Product Manager B2B"], skillsRecherchees:["Roadmap","Discovery utilisateur","SQL"] },
+    { name:"Klaro Analytics", sector:"Tech / SaaS", city:"Nantes", heatKey:"active",
+      signals:["2 postes Produit ouverts actuellement","Levée de série A de 5M€ en 2025"],
+      salaryMin:50, salaryMax:60,
+      contactName:"Élodie Marchand", contactRole:"Lead Product", contactEmail:"elodie.marchand@klaroanalytics.io",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Roadmap","SQL","A/B testing"] },
+    { name:"Verso Cloud", sector:"Tech / SaaS", city:"Toulouse", heatKey:"recent",
+      signals:["Dernier recrutement Produit il y a 3 mois","Migration cloud à grande échelle en cours"],
+      salaryMin:54, salaryMax:66,
+      contactName:"Hugo Delmas", contactRole:"Directeur Produit", contactEmail:"hugo.delmas@versocloud.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap produit","Agile / Scrum"] },
+
+    { name:"Lumen Health", sector:"Santé", city:"Nantes", heatKey:"recent",
+      signals:["Dernier poste Produit pourvu il y a 4 mois","Croissance des effectifs +20% sur 1 an"],
+      salaryMin:48, salaryMax:58,
+      contactName:"Sophie Lenoir", contactRole:"Talent Acquisition Lead", contactEmail:"sophie.lenoir@lumenhealth.fr",
+      rolesRecherches:["Product Owner","Product Manager"], skillsRecherchees:["Discovery utilisateur","Figma","Agile / Scrum"] },
+    { name:"Medivia", sector:"Santé", city:"Paris", heatKey:"funding",
+      signals:["Levée de fonds Series A de 8M€ il y a 6 semaines","Expansion vers 3 nouvelles régions"],
+      salaryMin:50, salaryMax:60,
+      contactName:"Claire Foucher", contactRole:"Head of Product", contactEmail:"claire.foucher@medivia.fr",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Discovery utilisateur","Figma"] },
+    { name:"CarePulse", sector:"Santé", city:"Toulouse", heatKey:"quiet",
+      signals:["Aucune activité de recrutement identifiée récemment","Croissance modérée des effectifs"],
+      salaryMin:44, salaryMax:52,
+      contactName:"Yasmine Benali", contactRole:"Responsable RH", contactEmail:"yasmine.benali@carepulse.fr",
+      rolesRecherches:["Chargé de produit"], skillsRecherchees:["Agile / Scrum"] },
+
+    { name:"Kiro Robotics", sector:"Industrie", city:"Grenoble", heatKey:"quiet",
+      signals:["Aucune activité de recrutement identifiée récemment","Effectifs stables depuis 8 mois"],
+      salaryMin:42, salaryMax:52,
+      contactName:"Antoine Faure", contactRole:"Directeur des opérations", contactEmail:"antoine.faure@kirorobotics.fr",
+      rolesRecherches:["Ingénieur produit","Chef de projet"], skillsRecherchees:["SQL","Agile / Scrum"] },
+    { name:"AtlasWorks", sector:"Industrie", city:"Grenoble", heatKey:"active",
+      signals:["1 poste Produit ouvert pour accompagner sa nouvelle ligne automatisée","Recherche de profils digitaux pour l'accompagner"],
+      salaryMin:46, salaryMax:56,
+      contactName:"Nora Chikh", contactRole:"DSI", contactEmail:"nora.chikh@atlasworks.fr",
+      rolesRecherches:["Product Manager","Chef de projet digital"], skillsRecherchees:["Roadmap","SQL","Agile / Scrum"] },
+    { name:"Ferrotech", sector:"Industrie", city:"Saint-Étienne", heatKey:"quiet",
+      signals:["Aucun signal de recrutement récent","Digitalisation naissante des processus"],
+      salaryMin:40, salaryMax:48,
+      contactName:"Paul Reynaud", contactRole:"Directeur industriel", contactEmail:"paul.reynaud@ferrotech.fr",
+      rolesRecherches:["Chef de projet"], skillsRecherchees:["SQL"] },
+
+    { name:"Fluxo Retail", sector:"Retail", city:"Lille", heatKey:"active",
+      signals:["2 postes Produit publiés ce trimestre","Repositionnement stratégique en cours"],
+      salaryMin:45, salaryMax:55,
+      contactName:"Nadia Bensaïd", contactRole:"Head of Product", contactEmail:"nadia.bensaid@fluxoretail.fr",
+      rolesRecherches:["Responsable produit","Product Manager"], skillsRecherchees:["Roadmap","A/B testing","Figma"] },
+    { name:"UrbanCart", sector:"Retail", city:"Lille", heatKey:"funding",
+      signals:["Levée de 3M€ il y a 2 mois pour accélérer le digital","Ouverture de 2 postes Produit"],
+      salaryMin:46, salaryMax:56,
+      contactName:"Thomas Girard", contactRole:"Head of Digital", contactEmail:"thomas.girard@urbancart.fr",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Roadmap","A/B testing","Figma"] },
+    { name:"Maison Circuit", sector:"Retail", city:"Marseille", heatKey:"recent",
+      signals:["Dernier recrutement Produit il y a 3 mois","Refonte de l'expérience e-commerce en cours"],
+      salaryMin:42, salaryMax:50,
+      contactName:"Inès Zeroual", contactRole:"Responsable digital", contactEmail:"ines.zeroual@maisoncircuit.fr",
+      rolesRecherches:["Product Owner"], skillsRecherchees:["Figma","A/B testing"] },
+
+    { name:"Arcadia Finance", sector:"Finance", city:"Paris", heatKey:"active",
+      signals:["Recrutement soutenu côté produit depuis 4 mois, poste toujours ouvert","Ouverture d'un nouveau bureau à Lyon"],
+      salaryMin:60, salaryMax:75,
+      contactName:"Julien Marchetti", contactRole:"VP Engineering", contactEmail:"julien.marchetti@arcadiafinance.fr",
+      rolesRecherches:["Chef de produit","Product Manager"], skillsRecherchees:["SQL","Agile / Scrum","Roadmap"] },
+    { name:"Meridian Capital", sector:"Finance", city:"Paris", heatKey:"recent",
+      signals:["Dernier recrutement Produit il y a 3 mois","Modernisation de la plateforme cliente"],
+      salaryMin:62, salaryMax:78,
+      contactName:"Victor Lemaitre", contactRole:"Directeur digital", contactEmail:"victor.lemaitre@meridiancapital.fr",
+      rolesRecherches:["Chef de produit","Product Manager"], skillsRecherchees:["SQL","Roadmap"] },
+    { name:"Fintra", sector:"Finance", city:"Lyon", heatKey:"quiet",
+      signals:["Aucune activité de recrutement identifiée récemment","Activité stable sur son cœur de métier"],
+      salaryMin:55, salaryMax:65,
+      contactName:"Camille Aubert", contactRole:"Responsable RH", contactEmail:"camille.aubert@fintra.fr",
+      rolesRecherches:["Chargé de produit"], skillsRecherchees:["Agile / Scrum"] },
+
+    { name:"Solstice Énergie", sector:"Énergie", city:"Toulouse", heatKey:"active",
+      signals:["3 postes Produit ouverts pour sa plateforme de pilotage énergétique","Croissance soutenue de l'activité"],
+      salaryMin:55, salaryMax:68,
+      contactName:"Léa Vasseur", contactRole:"Head of Product", contactEmail:"lea.vasseur@solisticenergie.fr",
+      rolesRecherches:["Product Manager","Chef de produit"], skillsRecherchees:["Roadmap produit","SQL","Discovery utilisateur"] },
+    { name:"Voltéa", sector:"Énergie", city:"Nantes", heatKey:"funding",
+      signals:["Levée de 20M€ il y a 2 mois pour accélérer sa plateforme","Équipe produit en expansion"],
+      salaryMin:58, salaryMax:72,
+      contactName:"Karim Ostrowski", contactRole:"VP Product", contactEmail:"karim.ostrowski@voltea.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap","A/B testing"] },
+    { name:"Ombrane", sector:"Énergie", city:"Marseille", heatKey:"quiet",
+      signals:["Aucune activité de recrutement identifiée depuis plusieurs mois","Activité stable"],
+      salaryMin:45, salaryMax:55,
+      contactName:"Sarah Coelho", contactRole:"Responsable RH", contactEmail:"sarah.coelho@ombrane.fr",
+      rolesRecherches:["Chargé de produit"], skillsRecherchees:["Agile / Scrum"] },
+
+    { name:"Studia", sector:"Éducation", city:"Paris", heatKey:"active",
+      signals:["2 postes Produit ouverts pour sa plateforme d'apprentissage en ligne","Croissance des inscriptions"],
+      salaryMin:48, salaryMax:58,
+      contactName:"Manon Girard", contactRole:"Head of Product", contactEmail:"manon.girard@studia.fr",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Discovery utilisateur","Figma","Roadmap"] },
+    { name:"AcadeMate", sector:"Éducation", city:"Lyon", heatKey:"recent",
+      signals:["Dernier recrutement Produit il y a 4 mois","Activité stable"],
+      salaryMin:44, salaryMax:54,
+      contactName:"Tom Berger", contactRole:"Lead Produit", contactEmail:"tom.berger@academate.fr",
+      rolesRecherches:["Product Owner"], skillsRecherchees:["Agile / Scrum","Figma"] },
+    { name:"Skillora", sector:"Éducation", city:"Bordeaux", heatKey:"funding",
+      signals:["Levée de 4M€ en série A il y a 6 semaines","Équipe en cours de constitution"],
+      salaryMin:46, salaryMax:56,
+      contactName:"Inès Maalouf", contactRole:"CEO", contactEmail:"ines.maalouf@skillora.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap produit","SQL"] },
+
+    { name:"Bastide Immo", sector:"Immobilier", city:"Montpellier", heatKey:"quiet",
+      signals:["Aucun signal de recrutement récent","Activité stable sur son marché local"],
+      salaryMin:40, salaryMax:50,
+      contactName:"Denis Roche", contactRole:"Directeur administratif et financier", contactEmail:"denis.roche@bastideimmo.fr",
+      rolesRecherches:["Chargé de produit"], skillsRecherchees:["Agile / Scrum"] },
+    { name:"Cadastro", sector:"Immobilier", city:"Paris", heatKey:"recent",
+      signals:["Dernier poste Produit pourvu il y a 3 mois","Digitalisation de ses outils en cours"],
+      salaryMin:48, salaryMax:58,
+      contactName:"Aline Fontaine", contactRole:"Head of Product", contactEmail:"aline.fontaine@cadastro.fr",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Roadmap","Discovery utilisateur"] },
+    { name:"Keyzo", sector:"Immobilier", city:"Lille", heatKey:"active",
+      signals:["1 poste Product Manager ouvert depuis 3 semaines","Croissance de la plateforme de mise en relation"],
+      salaryMin:50, salaryMax:62,
+      contactName:"Fabien Costa", contactRole:"CTO", contactEmail:"fabien.costa@keyzo.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap produit","SQL","A/B testing"] },
+
+    { name:"FretLine", sector:"Transport & Logistique", city:"Le Havre", heatKey:"active",
+      signals:["2 postes Produit ouverts pour sa plateforme de suivi logistique","Volume d'expéditions en forte hausse"],
+      salaryMin:50, salaryMax:62,
+      contactName:"Guillaume Petit", contactRole:"Head of Product", contactEmail:"guillaume.petit@fretline.fr",
+      rolesRecherches:["Product Manager","Product Owner"], skillsRecherchees:["Roadmap","SQL"] },
+    { name:"Voiline", sector:"Transport & Logistique", city:"Marseille", heatKey:"funding",
+      signals:["Levée de 10M€ il y a 2 mois pour son réseau de transport urbain","Expansion vers 2 nouvelles villes"],
+      salaryMin:52, salaryMax:64,
+      contactName:"Chloé Ferrand", contactRole:"VP Produit", contactEmail:"chloe.ferrand@voiline.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap produit","Discovery utilisateur"] },
+    { name:"Cargeo", sector:"Transport & Logistique", city:"Lyon", heatKey:"recent",
+      signals:["Dernier recrutement Produit il y a 5 mois","Activité stable"],
+      salaryMin:46, salaryMax:56,
+      contactName:"Baptiste Nguyen", contactRole:"Lead Produit", contactEmail:"baptiste.nguyen@cargeo.fr",
+      rolesRecherches:["Product Owner"], skillsRecherchees:["Agile / Scrum","Figma"] },
+
+    { name:"Nolix Télécom", sector:"Télécoms", city:"Paris", heatKey:"active",
+      signals:["3 postes Produit ouverts pour sa nouvelle offre fibre","Déploiement accéléré sur le territoire"],
+      salaryMin:55, salaryMax:68,
+      contactName:"Yasmine Rocher", contactRole:"Head of Product", contactEmail:"yasmine.rocher@nolixtelecom.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap produit","SQL","A/B testing"] },
+    { name:"Ondia", sector:"Télécoms", city:"Rennes", heatKey:"quiet",
+      signals:["Aucune activité de recrutement identifiée récemment","Marché mature, peu de mouvement"],
+      salaryMin:44, salaryMax:54,
+      contactName:"Marc Hébert", contactRole:"Responsable RH", contactEmail:"marc.hebert@ondia.fr",
+      rolesRecherches:["Chargé de produit"], skillsRecherchees:["Agile / Scrum"] },
+    { name:"Fluxtel", sector:"Télécoms", city:"Toulouse", heatKey:"recent",
+      signals:["Dernier poste Produit pourvu il y a 2 mois","Modernisation de ses offres en cours"],
+      salaryMin:48, salaryMax:58,
+      contactName:"Julie Ramos", contactRole:"Head of Digital", contactEmail:"julie.ramos@fluxtel.fr",
+      rolesRecherches:["Product Owner","Product Manager"], skillsRecherchees:["Discovery utilisateur","Figma"] },
+
+    { name:"Meridian Conseil", sector:"Conseil", city:"Paris", heatKey:"active",
+      signals:["2 postes Produit ouverts pour sa practice digitale","Croissance soutenue des mandats"],
+      salaryMin:56, salaryMax:70,
+      contactName:"Xavier Blanchet", contactRole:"Directeur digital", contactEmail:"xavier.blanchet@meridianconseil.fr",
+      rolesRecherches:["Chef de produit","Product Manager"], skillsRecherchees:["Roadmap","SQL","Agile / Scrum"] },
+    { name:"Altheo Conseil", sector:"Conseil", city:"Lyon", heatKey:"funding",
+      signals:["Levée stratégique de 5M€ il y a 1 mois pour sa practice tech","Ouverture d'une nouvelle practice"],
+      salaryMin:54, salaryMax:66,
+      contactName:"Nadia Ferreira", contactRole:"Associée", contactEmail:"nadia.ferreira@altheoconseil.fr",
+      rolesRecherches:["Product Manager"], skillsRecherchees:["Roadmap produit","Discovery utilisateur"] },
+    { name:"Vantage Partners", sector:"Conseil", city:"Paris", heatKey:"recent",
+      signals:["Dernier recrutement Produit il y a 4 mois","Activité soutenue sur ses mandats existants"],
+      salaryMin:58, salaryMax:72,
+      contactName:"Adrien Faucher", contactRole:"Manager", contactEmail:"adrien.faucher@vantagepartners.fr",
+      rolesRecherches:["Chef de produit"], skillsRecherchees:["SQL","Agile / Scrum"] }
+  ];
+
+  var JOB_OFFERS = [
+    { poste:"Product Manager Senior", entreprise:"NovaMetrics", secteur:"Tech / SaaS", ville:"Lyon", salMin:58, salMax:70, source:"Welcome to the Jungle", date:"2026-09-08" },
+    { poste:"Product Manager", entreprise:"Solace Data", secteur:"Tech / SaaS", ville:"Bordeaux", salMin:50, salMax:62, source:"LinkedIn", date:"2026-09-05" },
+    { poste:"Chef de produit digital", entreprise:"Arcadia Finance", secteur:"Finance", ville:"Paris", salMin:60, salMax:75, source:"Indeed", date:"2026-09-02" },
+    { poste:"Product Owner", entreprise:"Lumen Health", secteur:"Santé", ville:"Nantes", salMin:46, salMax:56, source:"LinkedIn", date:"2026-08-29" },
+    { poste:"Responsable produit", entreprise:"Fluxo Retail", secteur:"Retail", ville:"Lille", salMin:45, salMax:55, source:"Welcome to the Jungle", date:"2026-08-27" },
+    { poste:"Ingénieur produit", entreprise:"Kiro Robotics", secteur:"Industrie", ville:"Grenoble", salMin:42, salMax:52, source:"Indeed", date:"2026-08-24" },
+    { poste:"Product Manager Growth", entreprise:"NovaMetrics", secteur:"Tech / SaaS", ville:"Lyon", salMin:55, salMax:66, source:"LinkedIn", date:"2026-08-20" },
+    { poste:"Product Manager B2B", entreprise:"Solace Data", secteur:"Tech / SaaS", ville:"Bordeaux (remote partiel)", salMin:54, salMax:65, source:"Welcome to the Jungle", date:"2026-08-14" },
+    { poste:"Chargé de produit", entreprise:"Arcadia Finance", secteur:"Finance", ville:"Paris", salMin:52, salMax:63, source:"LinkedIn", date:"2026-08-10" },
+    { poste:"Product Manager Santé numérique", entreprise:"Lumen Health", secteur:"Santé", ville:"Nantes", salMin:50, salMax:60, source:"Indeed", date:"2026-08-05" }
+  ];
+
+  var CV_SCORES = [
+    {label:"Clarté du profil", value:82},
+    {label:"Mots-clés du secteur", value:64},
+    {label:"Impact chiffré", value:58},
+    {label:"Format compatible ATS", value:90}
+  ];
+  var CV_SUGGESTIONS = [
+    "Quantifiez vos résultats : remplacez « piloté le lancement d'une fonctionnalité » par « piloté le lancement d'une fonctionnalité ayant généré +12% d'activation en 3 mois ».",
+    "Ajoutez des mots-clés propres au secteur Tech/SaaS ciblé : « roadmap produit », « discovery », « OKR », « growth » — actuellement sous-représentés.",
+    "Réduisez la section formation à 3 lignes pour laisser plus de place à l'expérience récente, plus déterminante pour ce poste.",
+    "Le titre de poste visé n'apparaît pas explicitement en haut du CV — ajoutez-le pour améliorer la lecture par les filtres ATS."
+  ];
+  var CV_TAGS = ["Product Management","Roadmap","Discovery utilisateur","SQL","Figma","A/B testing","Agile / Scrum"];
+
+  /* ---------------- Helpers ---------------- */
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function seqColor(score){
+    if (score >= 80) return "var(--seq-650)";
+    if (score >= 65) return "var(--seq-550)";
+    if (score >= 45) return "var(--seq-450)";
+    if (score >= 25) return "var(--seq-400)";
+    return "var(--seq-250)";
+  }
+  function lowerFirst(s){ return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
+
+  /* ---------------- Nav ---------------- */
+  var navBtns = document.querySelectorAll(".nav-btn");
+  navBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      navBtns.forEach(function(b){ b.removeAttribute("aria-current"); });
+      btn.setAttribute("aria-current","page");
+      document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
+      document.getElementById("view-" + btn.dataset.view).classList.add("active");
+    });
+  });
+
+  /* ---------------- Dashboard sub-nav ---------------- */
+  var subBtns = document.querySelectorAll(".subnav-btn");
+  subBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      subBtns.forEach(function(b){ b.removeAttribute("aria-current"); });
+      btn.setAttribute("aria-current","page");
+      document.querySelectorAll("#view-dashboard .subview").forEach(function(v){ v.classList.remove("active"); });
+      document.getElementById("sub-" + btn.dataset.sub).classList.add("active");
+    });
+  });
+
+  /* ---------------- Profile persistence ---------------- */
+  var PROFILE_KEY = "vigie_profile_v1";
+  function loadProfile(){
+    try {
+      var raw = localStorage.getItem(PROFILE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function saveProfile(p){
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e){}
+  }
+  var profile = loadProfile() || {
+    secteur:"Tech / SaaS", poste:"Product Manager", salMin:55, salMax:65,
+    posteActuel:"Product Manager", anneesExp:4, salActuel:52
+  };
+
+  function applyProfileToSidebar(){
+    document.getElementById("sp-poste").textContent = profile.poste;
+    document.getElementById("sp-secteur").textContent = profile.secteur + " · Lyon";
+    document.getElementById("sp-salaire").textContent = profile.salMin + "–" + profile.salMax + " k€";
+  }
+  applyProfileToSidebar();
+
+  /* ---------------- CV dropzone ---------------- */
+  var dropzone = document.getElementById("dropzone");
+  var cvFile = document.getElementById("cv-file");
+  var cvFname = document.getElementById("cv-fname");
+  function handleFile(name){ cvFname.textContent = "Analyse de : " + name; }
+  dropzone.addEventListener("click", function(){ cvFile.click(); });
+  dropzone.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ cvFile.click(); }});
+  cvFile.addEventListener("change", function(){ if (cvFile.files[0]) handleFile(cvFile.files[0].name); });
+  ["dragover","dragenter"].forEach(function(ev){
+    dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.add("drag"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.remove("drag"); });
+  });
+  dropzone.addEventListener("drop", function(e){
+    var f = e.dataTransfer.files[0];
+    if (f) handleFile(f.name);
+  });
+
+  function renderCV(){
+    var scoresWrap = document.getElementById("cv-scores");
+    CV_SCORES.forEach(function(s){
+      var row = el("div","score-item");
+      row.innerHTML =
+        '<span>'+s.label+'</span>' +
+        '<span class="bar-track"><span class="bar-fill" style="width:'+s.value+'%;background:'+seqColor(s.value)+'"></span></span>' +
+        '<span class="num">'+s.value+'</span>';
+      scoresWrap.appendChild(row);
+    });
+    var sugg = document.getElementById("cv-suggestions");
+    CV_SUGGESTIONS.forEach(function(text){
+      var li = el("li","", '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10.5l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>'+text+'</span>');
+      sugg.appendChild(li);
+    });
+    var tags = document.getElementById("cv-tags");
+    CV_TAGS.forEach(function(t){ tags.appendChild(el("span","tag",t)); });
+  }
+  renderCV();
+
+  /* ---------------- Matching engine (adéquation candidat ↔ entreprise) ---------------- */
+  function normalize(s){
+    return (s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  }
+  function salaryFit(c){
+    var overlap = Math.min(c.salaryMax, profile.salMax) - Math.max(c.salaryMin, profile.salMin);
+    return overlap >= 0;
+  }
+  function overlappingSkills(c){
+    var candidateSkills = CV_TAGS.map(normalize);
+    return (c.skillsRecherchees||[]).filter(function(need){
+      var n = normalize(need);
+      return candidateSkills.some(function(s){ return s.indexOf(n) !== -1 || n.indexOf(s) !== -1; });
+    });
+  }
+  function matchingRole(c){
+    var target = normalize(profile.poste);
+    return (c.rolesRecherches||[]).find(function(r){
+      var rn = normalize(r);
+      return rn.indexOf(target) !== -1 || target.indexOf(rn) !== -1;
+    });
+  }
+  var HEAT = {
+    active:  { score:95, label:"Très chaude", cls:"heat-active"  },
+    funding: { score:82, label:"Chaude",      cls:"heat-funding" },
+    recent:  { score:60, label:"Tiède",       cls:"heat-recent"  },
+    quiet:   { score:32, label:"Froide",      cls:"heat-quiet"   }
+  };
+  function heatInfo(c){ return HEAT[c.heatKey] || HEAT.quiet; }
+  function matchScore(c){
+    var sectorMatch = c.sector === profile.secteur;
+    var roleMatch = !!matchingRole(c);
+    var overlap = overlappingSkills(c);
+    var needed = c.skillsRecherchees || [];
+    var skillRatio = needed.length ? overlap.length / needed.length : 0;
+    var fit = salaryFit(c);
+    var score =
+      heatInfo(c).score * 0.35 +
+      (sectorMatch ? 100 : 45) * 0.2 +
+      (roleMatch ? 100 : 35) * 0.2 +
+      skillRatio * 100 * 0.15 +
+      (fit ? 100 : 40) * 0.1;
+    return Math.round(Math.max(0, Math.min(100, score)));
+  }
+  function matchReason(c){
+    var role = matchingRole(c);
+    var overlap = overlappingSkills(c);
+    var signal = lowerFirst(c.signals[0]);
+    var base;
+    switch(c.heatKey){
+      case "active": base = "Recrute activement en ce moment — " + signal + "."; break;
+      case "funding": base = signal.charAt(0).toUpperCase()+signal.slice(1) + " — un signal fort de recrutements à venir."; break;
+      case "recent": base = signal.charAt(0).toUpperCase()+signal.slice(1) + " — l'activité reste récente."; break;
+      default: base = signal.charAt(0).toUpperCase()+signal.slice(1) + "."; break;
+    }
+    if (overlap.length >= 2 && role){
+      return base + " Elle recherche des profils " + role + " maîtrisant " + overlap.slice(0,2).join(" et ") + " — exactement votre parcours.";
+    }
+    if (role){
+      return base + " Elle recrute sur des postes de " + role + ", en ligne directe avec ce que vous visez.";
+    }
+    if (overlap.length >= 1){
+      return base + " Elle recherche des compétences en " + overlap[0] + ", que vous avez développées récemment.";
+    }
+    return base;
+  }
+
+  /* ---------------- Coherence diagnostic ---------------- */
+  var LEVELS = [
+    { label:"Junior / Débutant", minYears:0, kw:["junior","stagiaire","alternant","débutant","assistant"] },
+    { label:"Confirmé", minYears:3, kw:["confirmé","confirmée","consultant","chargé de","chargée de"] },
+    { label:"Senior / Expert", minYears:6, kw:["senior","expert","principal","lead "] },
+    { label:"Manager / Responsable", minYears:9, kw:["manager","responsable","chef de","chef d'équipe","team lead"] },
+    { label:"Direction (Directeur / VP)", minYears:12, kw:["directeur","directrice","vp ","vice-président","head of","chief","ceo","coo","cfo","cto"] }
+  ];
+  var TIERS = [
+    { key:"good-strong", label:"Très bonne", cls:"t-good-strong" },
+    { key:"good", label:"Bonne", cls:"t-good" },
+    { key:"warning", label:"Modérée", cls:"t-warning" },
+    { key:"serious", label:"Faible", cls:"t-serious" },
+    { key:"critical", label:"Très faible", cls:"t-critical" }
+  ];
+  var TIER_ICONS = {
+    "good-strong": '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    "good": '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    "warning": '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 6v5m0 3.2v.2" stroke-linecap="round"/><path d="M2.5 17h15L10 3z" stroke-linejoin="round"/></svg>',
+    "serious": '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 6v5m0 3.2v.2" stroke-linecap="round"/><path d="M2.5 17h15L10 3z" stroke-linejoin="round"/></svg>',
+    "critical": '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l8 8M14 6l-8 8" stroke-linecap="round"/></svg>'
+  };
+  function levelIndexFromYears(years){
+    var idx = 0;
+    for (var i=0;i<LEVELS.length;i++){ if (years >= LEVELS[i].minYears) idx = i; }
+    return idx;
+  }
+  var IC_TITLE_EXCEPTIONS = ["product manager","chef de produit","account manager","customer success manager"];
+  function levelIndexFromTitle(title){
+    var t = (title||"").toLowerCase();
+    for (var e=0;e<IC_TITLE_EXCEPTIONS.length;e++){
+      if (t.indexOf(IC_TITLE_EXCEPTIONS[e]) !== -1) return 2;
+    }
+    for (var i=LEVELS.length-1;i>=0;i--){
+      var kws = LEVELS[i].kw;
+      for (var j=0;j<kws.length;j++){ if (t.indexOf(kws[j]) !== -1) return i; }
+    }
+    return null;
+  }
+  function computeCoherence(p){
+    var candidateIdx = levelIndexFromYears(p.anneesExp);
+    var targetIdx = levelIndexFromTitle(p.posteVise);
+    var targetGuessed = targetIdx === null;
+    if (targetGuessed) targetIdx = candidateIdx;
+    var gap = targetIdx - candidateIdx;
+    var tierIdx;
+    if (gap <= 0) tierIdx = 0;
+    else if (gap === 1) tierIdx = 1;
+    else if (gap === 2) tierIdx = 2;
+    else if (gap === 3) tierIdx = 3;
+    else tierIdx = 4;
+
+    var pct = p.salActuel > 0 ? (p.salMax - p.salActuel) / p.salActuel : 0;
+    var salaryStretch = pct > 0.8;
+    if (salaryStretch) tierIdx = Math.min(tierIdx + 1, TIERS.length - 1);
+
+    var tier = TIERS[tierIdx];
+    var candidateLabel = LEVELS[candidateIdx].label;
+    var targetLabel = LEVELS[targetIdx].label;
+    var nextLabel = LEVELS[Math.min(candidateIdx+1, LEVELS.length-1)].label;
+
+    var advice;
+    if (tierIdx === 0){
+      advice = "Votre expérience (" + p.anneesExp + " ans en tant que " + p.posteActuel + ") correspond au niveau attendu pour un poste de " + p.posteVise + ". Vous êtes bien positionné(e) : misez sur des résultats chiffrés et une candidature ciblée plutôt que sur le volume.";
+    } else if (tierIdx === 1){
+      advice = "Viser un poste de " + p.posteVise + " avec " + p.anneesExp + " ans d'expérience représente une montée en responsabilité raisonnable. C'est atteignable si votre CV met en avant des exemples récents d'autonomie ou d'encadrement.";
+    } else if (tierIdx === 2){
+      advice = "Il y a un écart entre votre niveau actuel (" + candidateLabel + ") et le niveau généralement attendu pour " + p.posteVise + " (" + targetLabel + "). Ce n'est pas hors de portée, mais valorisez fortement toute expérience de pilotage de projet ou de management transverse pour combler l'écart.";
+    } else if (tierIdx === 3){
+      advice = "L'écart entre votre expérience actuelle (" + p.anneesExp + " ans, " + p.posteActuel + ") et le niveau " + targetLabel + " visé est important. Sans exemples concrets de responsabilités élargies, vos candidatures risquent d'être écartées d'emblée. Un poste de " + nextLabel + " serait un tremplin plus réaliste à court terme.";
+    } else {
+      advice = "Avec " + p.anneesExp + " ans d'expérience en tant que " + p.posteActuel + ", viser directement un poste de " + p.posteVise + " (" + targetLabel + ") est très ambitieux et rarement retenu par les recruteurs à ce stade. Concentrez-vous d'abord sur un poste de " + nextLabel + " pour construire l'expérience nécessaire.";
+    }
+    if (salaryStretch){
+      advice += " Par ailleurs, la fourchette visée (" + p.salMin + "–" + p.salMax + " k€) représente une hausse de +" + Math.round(pct*100) + "% par rapport à votre salaire actuel (" + p.salActuel + " k€) — poste et rémunération bougent en même temps, ce qui réduit encore vos chances.";
+    } else if (p.salMax < p.salActuel){
+      advice += " Notez aussi que votre fourchette visée est inférieure à votre salaire actuel — vérifiez qu'il s'agit bien de votre objectif.";
+    }
+
+    return { tier: tier, candidateLabel: candidateLabel, targetLabel: targetLabel, targetGuessed: targetGuessed, gap: gap, pct: pct, advice: advice };
+  }
+
+  function renderCoherence(){
+    var p = {
+      posteActuel: document.getElementById("cv-poste-actuel").value.trim() || "votre poste actuel",
+      anneesExp: parseFloat(document.getElementById("cv-annees").value) || 0,
+      salActuel: parseFloat(document.getElementById("cv-sal-actuel").value) || 0,
+      posteVise: document.getElementById("cv-poste-vise").value.trim() || profile.poste,
+      salMin: parseFloat(document.getElementById("cv-sal-min").value) || 0,
+      salMax: parseFloat(document.getElementById("cv-sal-max").value) || 0
+    };
+    var result = computeCoherence(p);
+
+    var badgeWrap = document.getElementById("coherence-badge-wrap");
+    badgeWrap.innerHTML = '<span class="coherence-badge '+result.tier.cls+'">'+TIER_ICONS[result.tier.key]+'Probabilité de réussite : '+result.tier.label+'</span>';
+    document.getElementById("coherence-advice").textContent = result.advice;
+    var breakdown = document.getElementById("coherence-breakdown");
+    breakdown.innerHTML =
+      '<div class="row"><span>Niveau détecté</span><span>'+result.candidateLabel+' ('+p.anneesExp+' ans)</span></div>' +
+      '<div class="row"><span>Niveau du poste visé'+(result.targetGuessed?" (estimé)":"")+'</span><span>'+result.targetLabel+'</span></div>' +
+      '<div class="row"><span>Écart de niveau</span><span>'+(result.gap<=0 ? "aucun" : result.gap+" niveau"+(result.gap>1?"x":""))+'</span></div>' +
+      '<div class="row"><span>Évolution salariale visée</span><span>'+(p.salActuel? (p.salMax>=p.salActuel? "+":"") + Math.round(result.pct*100)+"%" : "—")+'</span></div>';
+
+    var dv = document.getElementById("dash-coherence-value");
+    var dd = document.getElementById("dash-coherence-delta");
+    if (dv){
+      dv.textContent = result.tier.label;
+      dv.style.color = "var(--" + (result.tier.key==="critical" ? "status-critical" : result.tier.key==="serious" ? "status-serious" : result.tier.key==="warning" ? "status-warning" : "status-good") + ")";
+      dd.textContent = p.posteActuel + " → " + p.posteVise + " · " + p.anneesExp + " ans d'expérience";
+    }
+
+    profile.posteActuel = p.posteActuel; profile.anneesExp = p.anneesExp; profile.salActuel = p.salActuel;
+    profile.poste = p.posteVise; profile.salMin = p.salMin; profile.salMax = p.salMax;
+    saveProfile(profile);
+    applyProfileToSidebar();
+    if (typeof renderMarket === "function") renderMarket();
+  }
+
+  document.getElementById("cv-poste-actuel").value = profile.posteActuel;
+  document.getElementById("cv-annees").value = profile.anneesExp;
+  document.getElementById("cv-sal-actuel").value = profile.salActuel;
+  document.getElementById("cv-poste-vise").value = profile.poste;
+  document.getElementById("cv-sal-min").value = profile.salMin;
+  document.getElementById("cv-sal-max").value = profile.salMax;
+  document.getElementById("cv-diagnose").addEventListener("click", renderCoherence);
+  renderCoherence();
+
+  /* ---------------- Tracker (suivi des candidatures) ---------------- */
+  var TRACKER_KEY = "vigie_tracker_v1";
+  var STATUS_OPTIONS = ["À préparer","Envoyée","Relance","Entretien","Refus","Offre reçue"];
+  function statusClass(s){
+    switch(s){
+      case "À préparer": return "st-neutral";
+      case "Envoyée": return "st-progress";
+      case "Relance": return "st-warning";
+      case "Entretien": return "st-good";
+      case "Offre reçue": return "st-good";
+      case "Refus": return "st-critical";
+      default: return "st-neutral";
+    }
+  }
+  function loadTracker(){
+    try{
+      var raw = localStorage.getItem(TRACKER_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e){}
+    return [
+      {id:1, poste:"Product Manager Senior", entreprise:"NovaMetrics", secteur:"Tech / SaaS", date:"2026-09-01", statut:"Entretien", note:"Entretien RH prévu la semaine prochaine"},
+      {id:2, poste:"Product Manager B2B", entreprise:"Solace Data", secteur:"Tech / SaaS", date:"2026-08-20", statut:"Envoyée", note:""},
+      {id:3, poste:"Chef de produit digital", entreprise:"Arcadia Finance", secteur:"Finance", date:"2026-08-05", statut:"Refus", note:"Poste pourvu en interne"}
+    ];
+  }
+  var tracker = loadTracker();
+  var trackerSeq = tracker.reduce(function(m,r){ return Math.max(m,r.id); }, 0) + 1;
+  function saveTracker(){ try{ localStorage.setItem(TRACKER_KEY, JSON.stringify(tracker)); } catch(e){} }
+
+  function updateTrackerStats(){
+    var total = tracker.length;
+    var sent = tracker.filter(function(r){ return r.statut !== "À préparer"; }).length;
+    var active = tracker.filter(function(r){ return r.statut!=="Refus" && r.statut!=="Offre reçue"; }).length;
+    var interviews = tracker.filter(function(r){ return r.statut==="Entretien"; }).length;
+    var responded = tracker.filter(function(r){ return r.statut==="Entretien"||r.statut==="Refus"||r.statut==="Offre reçue"; }).length;
+    document.getElementById("tr-total").textContent = total;
+    document.getElementById("tr-active").textContent = active;
+    document.getElementById("tr-interviews").textContent = interviews;
+    document.getElementById("tr-rate").textContent = total ? Math.round(responded/total*100)+"%" : "0%";
+    var ds = document.getElementById("dash-cand-sent"); if (ds) ds.textContent = sent;
+    var di = document.getElementById("dash-cand-interviews"); if (di) di.textContent = interviews;
+  }
+
+  function renderTracker(){
+    var tbody = document.querySelector("#tracker-table tbody");
+    tbody.innerHTML = "";
+    tracker.slice().sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); }).forEach(function(r){
+      var tr = el("tr");
+      tr.innerHTML =
+        '<td>'+r.poste+'</td>'+
+        '<td>'+r.entreprise+'</td>'+
+        '<td>'+r.secteur+'</td>'+
+        '<td>'+(r.date||"—")+'</td>'+
+        '<td class="status-cell"></td>'+
+        '<td><input class="note-input" value="'+(r.note||"").replace(/"/g,'&quot;')+'" placeholder="—" style="border:none;background:none;width:100%;font-size:0.8rem;color:var(--ink-soft)"></td>'+
+        '<td><button class="row-del" type="button" title="Supprimer">✕</button></td>';
+      var select = el("select","status-select "+statusClass(r.statut));
+      STATUS_OPTIONS.forEach(function(s){
+        var opt = el("option","",s); opt.value = s; if (s===r.statut) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.addEventListener("change", function(){
+        r.statut = select.value;
+        select.className = "status-select " + statusClass(r.statut);
+        saveTracker(); updateTrackerStats();
+      });
+      tr.querySelector(".status-cell").appendChild(select);
+      tr.querySelector(".note-input").addEventListener("change", function(e){ r.note = e.target.value; saveTracker(); });
+      tr.querySelector(".row-del").addEventListener("click", function(){
+        tracker = tracker.filter(function(x){ return x.id !== r.id; });
+        saveTracker(); renderTracker();
+      });
+      tbody.appendChild(tr);
+    });
+    updateTrackerStats();
+  }
+
+  document.getElementById("t-add").addEventListener("click", function(){
+    var poste = document.getElementById("t-poste").value.trim();
+    var entreprise = document.getElementById("t-entreprise").value.trim();
+    if (!poste || !entreprise) return;
+    tracker.push({
+      id: trackerSeq++, poste: poste, entreprise: entreprise,
+      secteur: document.getElementById("t-secteur").value,
+      date: document.getElementById("t-date").value || new Date().toISOString().slice(0,10),
+      statut: "À préparer", note: ""
+    });
+    saveTracker(); renderTracker();
+    document.getElementById("t-poste").value = "";
+    document.getElementById("t-entreprise").value = "";
+    document.getElementById("t-date").value = "";
+  });
+
+  function addToTracker(entry, status){
+    tracker.push({
+      id: trackerSeq++, poste: entry.poste, entreprise: entry.entreprise, secteur: entry.secteur,
+      date: new Date().toISOString().slice(0,10), statut: status || "À préparer", note: ""
+    });
+    saveTracker(); renderTracker();
+  }
+
+  renderTracker();
+
+  /* ---------------- Offers (offres du marché) ---------------- */
+  var offersFilterCompany = null;
+
+  function renderOffers(){
+    var secteur = document.getElementById("o-secteur").value;
+    var poste = document.getElementById("o-poste").value.trim().toLowerCase();
+    var ville = document.getElementById("o-ville").value.trim().toLowerCase();
+    var list = JOB_OFFERS.filter(function(o){
+      if (offersFilterCompany && o.entreprise !== offersFilterCompany) return false;
+      if (secteur !== "all" && o.secteur !== secteur) return false;
+      if (poste && o.poste.toLowerCase().indexOf(poste) === -1) return false;
+      if (ville && o.ville.toLowerCase().indexOf(ville) === -1) return false;
+      return true;
+    }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+
+    var chipWrap = document.getElementById("o-chip-wrap");
+    chipWrap.innerHTML = offersFilterCompany
+      ? '<span class="filter-chip">Entreprise : '+offersFilterCompany+' <button type="button" id="o-chip-clear">✕</button></span>'
+      : "";
+    if (offersFilterCompany){
+      document.getElementById("o-chip-clear").addEventListener("click", function(){ offersFilterCompany = null; renderOffers(); });
+    }
+
+    var tbody = document.querySelector("#offers-table tbody");
+    tbody.innerHTML = "";
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">Aucune offre ne correspond à ces critères.</td></tr>';
+      return;
+    }
+    list.forEach(function(o){
+      var tr = el("tr");
+      tr.innerHTML =
+        '<td class="poste">'+o.poste+'</td>'+
+        '<td>'+o.entreprise+'</td>'+
+        '<td>'+o.secteur+'</td>'+
+        '<td>'+o.ville+'</td>'+
+        '<td>'+o.salMin+'–'+o.salMax+' k€</td>'+
+        '<td>'+o.date+'</td>'+
+        '<td class="src">'+o.source+'</td>'+
+        '<td><button class="btn small ghost add-track-btn" type="button">Ajouter au suivi</button></td>';
+      tr.querySelector(".add-track-btn").addEventListener("click", function(e){
+        addToTracker(o);
+        e.target.textContent = "Ajouté ✓";
+        e.target.disabled = true;
+      });
+      tbody.appendChild(tr);
+    });
+  }
+  document.getElementById("o-secteur").addEventListener("change", renderOffers);
+  document.getElementById("o-apply").addEventListener("click", renderOffers);
+  document.getElementById("o-reset").addEventListener("click", function(){
+    document.getElementById("o-secteur").value = "all";
+    document.getElementById("o-poste").value = "";
+    document.getElementById("o-ville").value = "";
+    offersFilterCompany = null;
+    renderOffers();
+  });
+  renderOffers();
+
+  /* ---------------- Cover letter generator ---------------- */
+  function generateCoverLetter(c){
+    var posteVise = profile.poste, posteActuel = profile.posteActuel, annees = profile.anneesExp;
+    var skills = CV_TAGS.slice(0,3).join(", ");
+    var signal1 = c.signals[0] ? lowerFirst(c.signals[0]) : "votre dynamique de recrutement récente";
+    var signal2 = c.signals[1];
+
+    var lines = [];
+    lines.push("Objet : Candidature spontanée — " + posteVise);
+    lines.push("");
+    lines.push(c.contactName ? "À l'attention de " + c.contactName + " (" + c.contactRole + ")," : "Madame, Monsieur,");
+    lines.push("");
+    lines.push(
+      "Je me permets de vous contacter directement au sujet de " + c.name + ", que je suis avec attention : " +
+      signal1 + ". C'est précisément ce type de dynamique qui m'amène à vous soumettre une candidature spontanée pour un poste de " + posteVise + "."
+    );
+    lines.push("");
+    lines.push(
+      "Fort(e) de " + annees + " ans d'expérience en tant que " + posteActuel + ", j'ai développé une expertise en " + skills +
+      ", que je souhaite aujourd'hui mettre au service d'une entreprise du secteur " + c.sector + " en pleine croissance comme la vôtre." +
+      (signal2 ? " Je note en particulier que " + lowerFirst(signal2) + ", ce qui laisse penser que des besoins en " + posteVise + " pourraient émerger à court terme." : "")
+    );
+    lines.push("");
+    lines.push(
+      "Je serais ravi(e) d'échanger avec vous sur la façon dont mon profil pourrait s'intégrer à vos projets actuels. Je reste à votre disposition pour un entretien, par téléphone ou en visioconférence, aux dates qui vous conviendront."
+    );
+    lines.push("");
+    lines.push("Cordialement,");
+    lines.push(CANDIDATE_NAME);
+    return lines.join("\n");
+  }
+
+  var letterBackdrop = document.getElementById("letter-modal-backdrop");
+  function openLetterModal(c){
+    var letter = generateCoverLetter(c);
+    document.getElementById("letter-company").textContent = c.name;
+    document.getElementById("letter-text").value = letter;
+    document.getElementById("letter-mailto").href =
+      "mailto:" + c.contactEmail +
+      "?subject=" + encodeURIComponent("Candidature spontanée — " + profile.poste) +
+      "&body=" + encodeURIComponent(letter);
+    letterBackdrop.classList.remove("hidden");
+  }
+  function closeLetterModal(){ letterBackdrop.classList.add("hidden"); }
+  document.getElementById("letter-close").addEventListener("click", closeLetterModal);
+  letterBackdrop.addEventListener("click", function(e){ if (e.target === letterBackdrop) closeLetterModal(); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeLetterModal(); });
+  document.getElementById("letter-copy").addEventListener("click", function(e){
+    var ta = document.getElementById("letter-text");
+    ta.focus(); ta.select();
+    var copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value); copied = true; }
+    } catch(err){}
+    if (!copied){ try { document.execCommand("copy"); } catch(err){} }
+    var btn = e.currentTarget, old = btn.textContent;
+    btn.textContent = "Copié ✓";
+    setTimeout(function(){ btn.textContent = old; }, 1600);
+  });
+
+  /* ---------------- Le marché : sélection d'un marché → entreprises → contact ---------------- */
+  function sectorGrowthPct(data){ return Math.round((data[data.length-1] - data[0]) / data[0] * 100); }
+  function sectorActivity(data){
+    var mid = Math.floor(data.length/2);
+    var firstDelta = (data[mid-1] - data[0]) / (mid-1);
+    var secondDelta = (data[data.length-1] - data[mid]) / (data.length-1-mid);
+    var ref = Math.max(Math.abs(firstDelta), 1);
+    if (secondDelta > firstDelta + ref*0.15) return {key:"up", label:"Dynamique"};
+    if (secondDelta < firstDelta - ref*0.15) return {key:"down", label:"Calme"};
+    return {key:"flat", label:"Stable"};
+  }
+
+  function renderMarketChips(){
+    var sectors = Object.keys(SECTOR_TRENDS).map(function(s){
+      var data = SECTOR_TRENDS[s];
+      return { sector:s, growth: sectorGrowthPct(data), activity: sectorActivity(data) };
+    });
+    sectors.sort(function(a,b){
+      if (a.sector === profile.secteur) return -1;
+      if (b.sector === profile.secteur) return 1;
+      return b.growth - a.growth;
+    });
+
+    var wrap = document.getElementById("market-chips");
+    var previouslySelected = wrap.dataset.selected;
+    wrap.innerHTML = "";
+    sectors.forEach(function(s){
+      var isTarget = s.sector === profile.secteur;
+      var chip = el("div","market-chip");
+      chip.dataset.sector = s.sector;
+      chip.innerHTML =
+        '<div class="market-chip-head"><span class="market-chip-name">'+s.sector+'</span>'+
+          (isTarget ? '<span class="trend-tag up">Votre secteur</span>' : '') +
+        '</div>'+
+        '<div class="market-chip-meta"><span class="trend-tag '+s.activity.key+'">'+s.activity.label+'</span></div>';
+      chip.addEventListener("click", function(){ selectMarket(s.sector); });
+      wrap.appendChild(chip);
+    });
+    var target = (previouslySelected && sectors.some(function(s){ return s.sector===previouslySelected; }))
+      ? previouslySelected : sectors[0].sector;
+    selectMarket(target);
+  }
+
+  function selectMarket(sector){
+    document.getElementById("market-chips").dataset.selected = sector;
+    document.querySelectorAll("#market-chips .market-chip").forEach(function(c){
+      c.classList.toggle("is-selected", c.dataset.sector === sector);
+    });
+    document.getElementById("market-title").textContent = "Entreprises — " + sector;
+    renderMarketCompanies(sector);
+  }
+
+  function renderMarketCompanies(sector){
+    var sub = document.getElementById("market-sub");
+    var wrap = document.getElementById("market-companies");
+    var list = COMPANIES.filter(function(c){ return c.sector === sector; })
+      .map(function(c){ return { c:c, score: matchScore(c) }; })
+      .sort(function(a,b){ return b.score - a.score; });
+    wrap.innerHTML = "";
+    if (!list.length){
+      sub.textContent = "Aucune entreprise recensée dans ce marché pour l'instant.";
+      return;
+    }
+    sub.textContent = list.length + " entreprise" + (list.length>1?"s":"") + " dans ce marché, classées selon leur adéquation avec votre profil — avec leur niveau de chaleur de recrutement.";
+    list.forEach(function(item){
+      var c = item.c, score = item.score, heat = heatInfo(c);
+      var row = el("div","market-company");
+      row.innerHTML =
+        '<div class="reco-score" style="background:'+seqColor(score)+'">'+score+'</div>'+
+        '<div class="reco-body">'+
+          '<div class="reco-name">'+c.name+' <span class="company-meta">'+c.city+'</span> <span class="trend-tag '+heat.cls+'">'+heat.label+'</span></div>'+
+          '<div class="reco-why">'+matchReason(c)+'</div>'+
+          '<div class="contact-block">'+
+            '<div class="contact-who">'+
+              '<span class="contact-name">'+c.contactName+'</span>'+
+              '<span class="contact-role">'+c.contactRole+'</span>'+
+            '</div>'+
+            '<div class="contact-actions">'+
+              '<a class="icon-btn" href="mailto:'+c.contactEmail+'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="4.5" width="15" height="11" rx="1.3"/><path d="M2.5 5.5l7.5 6 7.5-6"/></svg>Email</a>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="reco-actions">'+
+          '<button class="btn small accent m-letter" type="button">Lettre de motivation</button>'+
+          '<button class="btn small ghost m-applied" type="button">J\'ai postulé</button>'+
+        '</div>';
+      row.querySelector(".m-letter").addEventListener("click", function(){ openLetterModal(c); });
+      var appliedBtn = row.querySelector(".m-applied");
+      appliedBtn.addEventListener("click", function(){
+        addToTracker({ poste: profile.poste, entreprise: c.name, secteur: c.sector }, "Envoyée");
+        appliedBtn.textContent = "Candidature envoyée ✓";
+        appliedBtn.disabled = true;
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  function renderMarket(){ renderMarketChips(); }
+  renderMarket();
+
+})();
+</script>
